@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Stock Cards - Visualização Moderna</title>
+<style>
+    /* ===== RESET & VARIÁVEIS ===== */
+    * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+    }
+    
+    :root {
+        /* Cores base */
+        --bg-light: #f4f7fa;
+        --bg-dark: #0d1117;
+        --card-light: rgba(255, 255, 255, 0.92);
+        --card-dark: rgba(22, 27, 34, 0.92);
+        --text-primary-light: #1f2a44;
+        --text-primary-dark: #e6edf3;
+        --text-secondary-light: #64748b;
+        --text-secondary-dark: #8b949e;
+        --positive: #2dd4bf;
+        --negative: #f87171;
+        --border-light: rgba(203, 213, 225, 0.5);
+        --border-dark: rgba(51, 65, 85, 0.5);
+        --accent: #7c3aed;
+        --accent-hover: #6d28d9;
+        --shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+        --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.15);
+        --glass-blur: blur(12px);
+        --transition-base: all 0.3s ease;
+        --transition-fast: all 0.2s ease;
+        
+        /* Tamanhos consistentes */
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 12px;
+        --spacing-lg: 16px;
+        --spacing-xl: 20px;
+        --spacing-xxl: 24px;
+    }
+
+    /* ===== THEMES ===== */
+    [data-theme="dark"] {
+        --bg: var(--bg-dark);
+        --card-bg: var(--card-dark);
+        --text-primary: var(--text-primary-dark);
+        --text-secondary: var(--text-secondary-dark);
+        --border: var(--border-dark);
+    }
+    
+    [data-theme="light"] {
+        --bg: var(--bg-light);
+        --card-bg: var(--card-light);
+        --text-primary: var(--text-primary-light);
+        --text-secondary: var(--text-secondary-light);
+        --border: var(--border-light);
+    }
+
+    /* ===== BASE STYLES ===== */
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+        padding: var(--spacing-md);
+        color: var(--text-primary);
+        transition: var(--transition-base);
+        line-height: 1.5;
+    }
+
+    /* ===== LAYOUT COMPONENTS ===== */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .title {
+        font-size: clamp(1.5rem, 5vw, 1.75rem);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .controls {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+    }
+
+    /* ===== SEARCH AND FILTERS ===== */
+    .search-filters-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+        background: var(--card-bg);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow);
+        backdrop-filter: var(--glass-blur);
+    }
+
+    .search-container {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    .search-input {
+        flex: 1;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: var(--transition-fast);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+    }
+
+    .filters-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        padding-top: var(--spacing-md);
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .filter-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* ESTILOS PERSONALIZADOS PARA SELECT */
+    .custom-select-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-select {
+        width: 100%;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        padding-right: 30px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text-primary);
+        font-size: 13px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+
+    .custom-select:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+    }
+
+    .custom-select-wrapper::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid var(--text-secondary);
+        pointer-events: none;
+        transition: var(--transition-fast);
+    }
+
+    .custom-select:hover + .custom-select-wrapper::after,
+    .custom-select:focus + .custom-select-wrapper::after {
+        border-top-color: var(--accent);
+    }
+
+    /* Para Internet Explorer */
+    .custom-select::-ms-expand {
+        display: none;
+    }
+
+    .filter-input {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        color: var(--text-primary);
+        font-size: 13px;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: flex-end;
+    }
+
+    .filter-btn {
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--card-bg);
+        color: var(--text-primary);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition-fast);
+    }
+
+    .filter-btn.apply {
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+        color: white;
+        border: none;
+    }
+
+    .filter-btn:hover {
+        background: var(--accent);
+        color: white;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--text-secondary);
+        font-style: italic;
+        grid-column: 1 / -1;
+    }
+
+    /* ===== INTERACTIVE ELEMENTS ===== */
+    .theme-toggle {
+        width: 44px;
+        height: 24px;
+        background: var(--card-bg);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        cursor: pointer;
+        transition: var(--transition-base);
+        backdrop-filter: var(--glass-blur);
+    }
+    
+    .theme-toggle:hover {
+        background: rgba(124, 58, 237, 0.1);
+    }
+    
+    .theme-switch {
+        width: 18px;
+        height: 18px;
+        background: var(--accent);
+        border-radius: 50%;
+        transition: var(--transition-base);
+    }
+    
+    [data-theme="dark"] .theme-switch {
+        transform: translateX(20px);
+    }
+
+    .refresh-btn {
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+        border: none;
+        padding: var(--spacing-sm) var(--spacing-lg);
+        cursor: pointer;
+        border-radius: var(--radius-sm);
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        transition: var(--transition-fast);
+        backdrop-filter: var(--glass-blur);
+        white-space: nowrap;
+    }
+    
+    .refresh-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        background: linear-gradient(135deg, var(--accent-hover), #9b7cfa);
+    }
+    
+    .refresh-btn:disabled {
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.7;
+    }
+
+    /* ===== LIST STYLES ===== */
+    .list-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        width: 100%;
+    }
+
+    .list-item {
+        background: var(--card-bg);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow);
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: var(--spacing-lg);
+        align-items: center;
+        transition: var(--transition-base);
+        backdrop-filter: var(--glass-blur);
+        animation: fadeIn 0.4s ease-out;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .list-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .list-ticker-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        text-align: left;
+    }
+
+    .list-ticker-symbol {
+        font-size: clamp(1rem, 4vw, 1.125rem);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .list-company-name {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .list-price-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--spacing-xs);
+    }
+
+    .list-current-price {
+        font-size: clamp(1rem, 4vw, 1.25rem);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .list-price-change {
+        display: flex;
+        gap: var(--spacing-sm);
+        font-size: 13px;
+        font-weight: 600;
+        align-items: center;
+    }
+
+    .list-metrics {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: flex-end;
+        grid-column: 1 / 4;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        width: 100%;
+    }
+
+    .list-metric {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 70px;
+    }
+
+    .list-metric-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .list-metric-value {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .list-dividend-label {
+        font-size: 10px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .list-dividend-value {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    /* ===== MODAL STYLES ===== */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-base);
+        backdrop-filter: var(--glass-blur);
+        padding: var(--spacing-md);
+    }
+    
+    .modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .modal-content {
+        background: var(--card-bg);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        max-width: 600px;
+        width: 100%;
+        box-shadow: var(--shadow);
+        backdrop-filter: var(--glass-blur);
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .close-modal {
+        position: absolute;
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+        cursor: pointer;
+        font-size: 24px;
+        color: var(--text-secondary);
+        transition: var(--transition-fast);
+        background: none;
+        border: none;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        z-index: 10;
+    }
+    
+    .close-modal:hover {
+        color: var(--text-primary);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* ===== CARD STYLES ===== */
+    .card {
+        background: var(--card-bg);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow);
+        backdrop-filter: var(--glass-blur);
+        transition: var(--transition-base);
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .ticker-info {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+    
+    .ticker-symbol {
+        font-size: clamp(1.25rem, 5vw, 1.375rem);
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--positive);
+        box-shadow: 0 0 6px rgba(45, 212, 191, 0.3);
+    }
+    
+    .company-name {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: var(--spacing-lg);
+        text-align: left;
+    }
+    
+    .current-price {
+        font-size: clamp(1.5rem, 8vw, 2.25rem);
+        font-weight: 800;
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-primary);
+    }
+    
+    .price-change {
+        display: flex;
+        gap: var(--spacing-sm);
+        font-size: 14px;
+        font-weight: 600;
+        align-items: center;
+    }
+    
+    .change-positive { color: var(--positive); }
+    .change-negative { color: var(--negative); }
+    .change-neutral { color: var(--text-secondary); }
+
+    .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--border);
+    }
+    
+    .metric-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .metric-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .dividends-section {
+        margin-top: var(--spacing-lg);
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--border);
+    }
+    
+    .dividends-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-primary);
+    }
+    
+    .dividends-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    
+    .dividends-table th,
+    .dividends-table td {
+        padding: var(--spacing-sm);
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .dividends-table th {
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+    
+    .dividends-table td {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .update-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: var(--spacing-lg);
+    }
+    
+    .last-update {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* ===== COMPANY LOGO ===== */
+    .company-logo {
+        width: 52px;
+        height: 52px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        color: #fff;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+        box-shadow: var(--shadow);
+        align-self: flex-start;
+        margin-right: var(--spacing-md);
+        overflow: hidden;
+    }
+    
+    .company-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: var(--radius-sm);
+        transition: var(--transition-fast);
+    }
+    
+    .company-logo:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    }
+    
+    .company-logo.loading {
+        animation: pulse 1.5s infinite;
+    }
+    
+    .logo-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+        border-radius: var(--radius-sm);
+    }
+
+    /* ===== UTILITY CLASSES ===== */
+    .error-message {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.2);
+        color: var(--negative);
+        padding: var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        text-align: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .hidden { 
+        display: none !important; 
+    }
+
+    .text-positive { color: var(--positive); }
+    .text-negative { color: var(--negative); }
+    .text-secondary { color: var(--text-secondary); }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes slideIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(-20px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+    
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+        }
+        to { 
+            opacity: 1; 
+        }
+    }
+    
+    @keyframes pulse {
+        0% { 
+            opacity: 0.7; 
+        }
+        50% { 
+            opacity: 1; 
+        }
+        100% { 
+            opacity: 0.7; 
+        }
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 1024px) {
+        .list-item {
+            grid-template-columns: auto 1fr auto;
+            gap: var(--spacing-md);
+        }
+        
+        .list-metrics {
+            grid-column: 1 / 4;
+            justify-content: flex-start;
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+        }
+        
+        .list-dividend-info {
+            position: static;
+            align-items: flex-start;
+            margin-top: var(--spacing-md);
+            grid-column: 3;
+            grid-row: 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        :root {
+            --spacing-xl: 16px;
+        }
+        
+        body {
+            padding: var(--spacing-md);
+        }
+        
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+        
+        .controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .search-filters-container {
+            padding: var(--spacing-md);
+        }
+        
+        .filters-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-buttons {
+            grid-column: 1;
+            justify-content: center;
+            margin-top: var(--spacing-md);
+        }
+        
+        .list-item {
+            grid-template-columns: auto 1fr;
+            text-align: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+        }
+        
+        .list-price-info {
+            grid-column: 2;
+            align-items: center;
+        }
+        
+        .list-metrics {
+            grid-column: 1 / 3;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .list-metric {
+            min-width: 60px;
+        }
+        
+        .modal-content {
+            width: 100%;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-md);
+        }
+        
+        .metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .search-container {
+            flex-direction: column;
+        }
+        
+        .refresh-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        body {
+            padding: var(--spacing-sm);
+        }
+        
+        .title { 
+            font-size: 1.25rem; 
+        }
+        
+        .current-price { 
+            font-size: 1.5rem; 
+        }
+        
+        .company-logo {
+            width: 44px;
+            height: 44px;
+        }
+        
+        .list-metrics {
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .list-metric {
+            flex-direction: row;
+            justify-content: space-between;
+            width: 100%;
+            min-width: unset;
+        }
+        
+        .refresh-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 13px;
+        }
+        
+        .card {
+            padding: var(--spacing-lg);
+        }
+        
+        .dividends-table {
+            font-size: 11px;
+        }
+        
+        .dividends-table th,
+        .dividends-table td {
+            padding: var(--spacing-xs);
+        }
+        
+        .list-item {
+            grid-template-areas:
+                "logo ticker"
+                "logo price"
+                "metrics metrics"
+                "dividend dividend";
+        }
+        
+        .company-logo { 
+            grid-area: logo; 
+        }
+        
+        .list-ticker-info { 
+            grid-area: ticker; 
+            text-align: left;
+        }
+        
+        .list-price-info { 
+            grid-area: price; 
+            align-items: flex-start !important;
+            text-align: left !important;
+        }
+        
+        .list-metrics { 
+            grid-area: metrics; 
+        }
+        
+        .list-dividend-info { 
+            grid-area: dividend; 
+        }
+    }
+
+    /* ===== TOOLTIP ===== */
+    .tooltip {
+        position: relative;
+    }
+    
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 100px;
+        background: var(--card-bg);
+        color: var(--text-primary);
+        text-align: center;
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-xs);
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -50px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+        backdrop-filter: var(--glass-blur);
+    }
+    
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* ===== GRID AREAS FOR LIST ITEM ===== */
+    .list-item {
+        grid-template-areas:
+            "logo ticker price"
+            "logo metrics metrics"
+            "dividend dividend dividend";
+    }
+    
+    .company-logo { 
+        grid-area: logo; 
+    }
+    
+    .list-ticker-info { 
+        grid-area: ticker; 
+        text-align: left;
+    }
+    
+    .list-price-info { 
+        grid-area: price; 
+    }
+    
+    .list-metrics { 
+        grid-area: metrics; 
+    }
+    
+    .list-dividend-info { 
+        grid-area: dividend; 
+        justify-self: center;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border);
+        width: 100%;
+        align-items: center;
+    }
+    
+    /* Loading spinner */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+</head>
+<body data-theme="light">
+    <div class="header">
+        <div class="title">Stock Cards</div>
+        <div class="controls">
+            <button class="refresh-btn" id="refreshAllBtn" onclick="loadAllStockData()">
+                <span id="refreshText">Atualizar Tudo</span>
+                <span id="refreshSpinner" class="loading-spinner" style="display: none;"></span>
+            </button>
+            <div class="theme-toggle" title="Alternar tema" onclick="toggleTheme()">
+                <div class="theme-switch"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="globalError" style="display:none;" class="error-message"></div>
+
+    <!-- Search and Filters Section -->
+    <div class="search-filters-container">
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por ticker ou nome..." oninput="filterStocks()">
+        </div>
+        <div class="filters-container">
+            <div class="filter-group">
+                <label class="filter-label">RSI (4)</label>
+                <div class="custom-select-wrapper">
+                    <select id="rsiFilter" class="custom-select" onchange="filterStocks()">
+                        <option value="">Todos</option>
+                        <option value="oversold">Oversold (≤20)</option>
+                        <option value="neutral">Neutral (21-79)</option>
+                        <option value="overbought">Overbought (≥80)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">CCI (4)</label>
+                <div class="custom-select-wrapper">
+                    <select id="cciFilter" class="custom-select" onchange="filterStocks()">
+                        <option value="">Todos</option>
+                        <option value="oversold">Oversold (≤-200)</option>
+                        <option value="neutral">Neutral (-199 a 199)</option>
+                        <option value="overbought">Overbought (≥200)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">SMA Lows (3)</label>
+                <div class="custom-select-wrapper">
+                    <select id="smaFilter" class="custom-select" onchange="filterStocks()">
+                        <option value="">Todos</option>
+                        <option value="above">Acima do Preço</option>
+                        <option value="below">Abaixo do Preço</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Próximo Dividendo</label>
+                <div class="custom-select-wrapper">
+                    <select id="dividendFilter" class="custom-select" onchange="filterStocks()">
+                        <option value="">Todos</option>
+                        <option value="thisWeek">Esta Semana</option>
+                        <option value="thisMonth">Este Mês</option>
+                        <option value="nextMonth">Próximo Mês</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn apply" onclick="filterStocks()">Aplicar</button>
+                <button class="filter-btn" onclick="clearFilters()">Limpar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="list-container" id="listContainer">
+        <!-- Os itens de lista serão gerados dinamicamente aqui -->
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <!-- Card content here -->
+        </div>
+    </div>
+
+<script>
+/* Configuração dos ativos */
+const STOCKS_CONFIG = [
+    {
+        ticker: 'BBDC3.SA',
+        displayTicker: 'BBDC3',
+        logo: 'https://s3-symbol-logo.tradingview.com/bradesco--big.svg',
+        dividends: [
+            { exDate: '20/04/2023', payDate: '10/05/2023', type: 'Dividendo', value: 'R$ 0,50', percentual: '2,5%' },
+            { exDate: '20/07/2023', payDate: '10/08/2023', type: 'JCP', value: 'R$ 0,40', percentual: '1,8%' },
+            { exDate: '11/11/2025', payDate: '10/08/2023', type: 'JCP', value: 'R$ 0,40', percentual: '1,8%' }
+        ]
+    },
+    {
+        ticker: 'PETR4.SA',
+        displayTicker: 'PETR4',
+        logo: 'https://s3-symbol-logo.tradingview.com/brasileiro-petrobras--big.svg',
+        dividends: [
+            { exDate: '20/04/2023', payDate: '10/05/2023', type: 'Dividendo', value: 'R$ 0,50', percentual: '2,5%' },
+            { exDate: '20/07/2023', payDate: '10/08/2023', type: 'JCP', value: 'R$ 0,40', percentual: '1,8%' },
+            { exDate: '11/11/2025', payDate: '10/08/2023', type: 'JCP', value: 'R$ 0,40', percentual: '1,8%' }
+        ]
+    },
+    {
+        ticker: 'VALE3.SA',
+        displayTicker: 'VALE3',
+        logo: 'https://s3-symbol-logo.tradingview.com/vale--big.svg',
+        dividends: [
+            { exDate: '15/03/2023', payDate: '05/04/2023', type: 'Dividendo', value: 'R$ 1,20', percentual: '3,2%' },
+            { exDate: '15/06/2023', payDate: '05/07/2023', type: 'Dividendo', value: 'R$ 1,05', percentual: '2,8%' }
+        ]
+    },
+    {
+        ticker: 'ITUB4.SA',
+        displayTicker: 'ITUB4',
+        logo: 'https://s3-symbol-logo.tradingview.com/itau-unibanco--big.svg',
+        dividends: [
+            { exDate: '23/11/2023', payDate: '15/05/2023', type: 'Dividendo', value: 'R$ 0,35', percentual: '1,5%' },
+            { exDate: '25/07/2023', payDate: '15/08/2023', type: 'Dividendo', value: 'R$ 0,38', percentual: '1,6%' }
+        ]
+    }
+];
+
+// Objeto para armazenar os dados atuais das ações
+let stockData = {};
+
+const PROXY_RAW = 'https://api.allorigins.win/raw?url=';
+const PROXY_GET = 'https://api.allorigins.win/get?url=';
+
+/* Utilitários */
+function formatBRL(v) {
+    if (v === null || v === undefined || isNaN(v)) return 'R$ --,--';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(Number(v));
+}
+function formatVolume(v) {
+    if (v === null || v === undefined || isNaN(v)) return '—';
+    const n = Number(v);
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toLocaleString('pt-BR');
+}
+function formatDate(timestamp) {
+    if (!timestamp) return '—';
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function showError(msg, isGlobal = false, cardElement = null) {
+    let el;
+    if (isGlobal) {
+        el = document.getElementById('globalError');
+    } else if (cardElement) {
+        el = cardElement.querySelector('.error-message');
+    }
+    if (!el) return;
+    if (!msg) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+    }
+    el.style.display = 'block';
+    el.textContent = msg;
+    console.error(msg);
+}
+function findLastValid(arr) {
+    if (!Array.isArray(arr)) return null;
+    for (let i = arr.length - 1; i >= 0; i--) {
+        const v = arr[i];
+        if (v !== null && v !== undefined && !isNaN(v)) return { value: Number(v), index: i };
+    }
+    return null;
+}
+
+/* Encontra a próxima data COM */
+function findNextDividendDate(dividends) {
+    if (!dividends || dividends.length === 0) return null;
+    const sortedDividends = [...dividends].sort((a, b) => {
+        const dateA = parseDateString(a.exDate);
+        const dateB = parseDateString(b.exDate);
+        return dateB - dateA;
+    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const dividend of sortedDividends) {
+        const exDate = parseDateString(dividend.exDate);
+        if (exDate && exDate >= today) {
+            return dividend.exDate;
+        }
+    }
+    return sortedDividends[0].exDate;
+}
+
+/* Converte string de data para objeto Date */
+function parseDateString(dateStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    return new Date(year, month, day);
+}
+
+/* Proxy fetch robusto */
+async function proxyFetchJson(url) {
+    try {
+        const r = await fetch(PROXY_RAW + encodeURIComponent(url));
+        if (!r.ok) throw new Error('raw proxy status ' + r.status);
+        const text = await r.text();
+        return JSON.parse(text);
+    } catch (errRaw) {
+        console.warn('raw proxy falhou, tentando get?url= —', errRaw);
+        const r2 = await fetch(PROXY_GET + encodeURIComponent(url));
+        if (!r2.ok) throw new Error('get proxy status ' + r2.status);
+        const j = await r2.json();
+        const contents = j && j.contents;
+        if (!contents) throw new Error('proxy get retornou sem contents');
+        try {
+            return JSON.parse(contents);
+        } catch (e) {
+            if (typeof contents === 'object') return contents;
+            console.error('falha ao parsear contents do proxy get', e, contents);
+            throw e;
+        }
+    }
+}
+
+/* RSI */
+function computeRSIFromCloses(closes, periods = 4) {
+    if (!Array.isArray(closes)) return null;
+    const valid = closes.filter(c => c !== null && c !== undefined && !isNaN(c));
+    if (valid.length < periods + 1) return null;
+    const recent = valid.slice(-(periods + 1));
+    let gains = 0, losses = 0;
+    for (let i = 1; i < recent.length; i++) {
+        const diff = recent[i] - recent[i - 1];
+        if (diff > 0) gains += diff;
+        else losses += Math.abs(diff);
+    }
+    const avgGain = gains / periods;
+    const avgLoss = losses / periods;
+    if (avgLoss === 0) return 100.00;
+    const rs = avgGain / avgLoss;
+    return +(100 - (100 / (1 + rs))).toFixed(2);
+}
+
+/* CCI */
+function computeCCI(highs, lows, closes, periods = 4) {
+    if (!Array.isArray(highs) || !Array.isArray(lows) || !Array.isArray(closes)) return null;
+    const validHighs = highs.filter(h => h !== null && !isNaN(h));
+    const validLows = lows.filter(l => l !== null && !isNaN(l));
+    const validCloses = closes.filter(c => c !== null && !isNaN(c));
+    if (validHighs.length < periods || validLows.length < periods || validCloses.length < periods) return null;
+    const recentHighs = validHighs.slice(-periods);
+    const recentLows = validLows.slice(-periods);
+    const recentCloses = validCloses.slice(-periods);
+    const typicalPrices = recentHighs.map((h, i) => (h + recentLows[i] + recentCloses[i]) / 3);
+    const sma = typicalPrices.reduce((sum, val) => sum + val, 0) / periods;
+    const meanDeviation = typicalPrices.reduce((sum, val) => sum + Math.abs(val - sma), 0) / periods;
+    if (meanDeviation === 0) return 0;
+    const cci = (typicalPrices[typicalPrices.length - 1] - sma) / (0.015 * meanDeviation);
+    return +cci.toFixed(2);
+}
+
+/* SMA of Lows */
+function computeSMALows(lows, periods = 3) {
+    if (!Array.isArray(lows)) return null;
+    const validLows = lows.filter(l => l !== null && !isNaN(l));
+    if (validLows.length < periods) return null;
+    const recentLows = validLows.slice(-periods);
+    const sma = recentLows.reduce((sum, val) => sum + val, 0) / periods;
+    return +sma.toFixed(2);
+}
+
+/* Atualiza visual da variação */
+function updatePriceChangeDisplay(element, changePercent, isList = false) {
+    const prefix = isList ? 'list-' : '';
+    const changeEl = element.querySelector(`.${prefix}price-change`);
+    const arrowEl = element.querySelector(`.${prefix}change-arrow`);
+    const pctEl = element.querySelector(`.${prefix}change-pct`);
+    const statusDot = element.querySelector('.status-dot');
+    if (changePercent === null || changePercent === undefined || isNaN(changePercent)) {
+        if (arrowEl) arrowEl.textContent = '—';
+        if (pctEl) pctEl.textContent = '--%';
+        if (changeEl) changeEl.className = `${prefix}price-change change-neutral`;
+        if (statusDot) statusDot.style.background = 'var(--text-secondary)';
+        return;
+    }
+    const v = Number(changePercent);
+    if (pctEl) pctEl.textContent = v.toFixed(2) + '%';
+    if (v > 0) {
+        if (arrowEl) arrowEl.textContent = '↗';
+        if (changeEl) changeEl.className = `${prefix}price-change change-positive`;
+        if (statusDot) statusDot.style.background = 'var(--positive)';
+    } else if (v < 0) {
+        if (arrowEl) arrowEl.textContent = '↘';
+        if (changeEl) changeEl.className = `${prefix}price-change change-negative`;
+        if (statusDot) statusDot.style.background = 'var(--negative)';
+    } else {
+        if (arrowEl) arrowEl.textContent = '—';
+        if (changeEl) changeEl.className = `${prefix}price-change change-neutral`;
+        if (statusDot) statusDot.style.background = 'var(--text-secondary)';
+    }
+}
+
+/* Extrai nome da resposta do search */
+function extractCompanyNameFromSearch(searchData) {
+    try {
+        if (searchData && Array.isArray(searchData.quotes) && searchData.quotes.length) {
+            const r = searchData.quotes[0];
+            const name = r.longname || r.shortname || r.symbol;
+            if (name) return String(name).trim().replace(/\s{2,}/g, ' ');
+        }
+    } catch (e) {
+        console.warn('extractCompanyNameFromSearch falhou', e, searchData);
+    }
+    return null;
+}
+
+/* Atualiza tabela de dividendos */
+function updateDividendsTable(cardElement, dividends) {
+    const tbody = cardElement.querySelector('.dividends-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!dividends || dividends.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="5" style="text-align: center;">Sem dados de dividendos disponíveis</td>`;
+        tbody.appendChild(row);
+        return;
+    }
+    dividends.forEach(div => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${div.exDate || '—'}</td>
+            <td>${div.payDate || '—'}</td>
+            <td>${div.type || '—'}</td>
+            <td>${div.value || '—'}</td>
+            <td>${div.percentual || '—'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+/* Cria o HTML do card para um ativo */
+function createStockCard(stockConfig) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${stockConfig.ticker.replace('.', '-')}`;
+    card.innerHTML = `
+        <div class="error-message" style="display:none;"></div>
+        <div class="card-header">
+            <div class="ticker-info">
+                <div class="ticker-symbol">${stockConfig.displayTicker}</div>
+                <div class="status-dot"></div>
+            </div>
+            <div class="company-logo tooltip" onclick="loadStockData('${stockConfig.ticker}')">
+                <div class="logo-fallback">${stockConfig.displayTicker.charAt(0)}</div>
+                <span class="tooltiptext">Atualizar</span>
+            </div>
+        </div>
+        <div class="company-name">—</div>
+        <div>
+            <div class="current-price">R$ --,--</div>
+            <div class="price-change change-neutral"><span class="change-arrow">—</span> <span class="change-pct">--%</span></div>
+        </div>
+        <div class="metrics">
+            <div>
+                <div class="metric-label">Volume (5d)</div>
+                <div class="metric-value volume">—</div>
+            </div>
+            <div>
+                <div class="metric-label">RSI (4)</div>
+                <div class="metric-value rsi">—</div>
+            </div>
+            <div>
+                <div class="metric-label">CCI (4)</div>
+                <div class="metric-value cci">—</div>
+            </div>
+            <div>
+                <div class="metric-label">SMA Lows (3)</div>
+                <div class="metric-value sma">—</div>
+            </div>
+        </div>
+        <div class="dividends-section">
+            <div class="dividends-title">Dividendos</div>
+            <table class="dividends-table">
+                <thead>
+                    <tr>
+                        <th>Data Com</th>
+                        <th>Pagamento</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody class="dividends-table-body"></tbody>
+            </table>
+        </div>
+        <div class="update-section">
+            <div class="last-update">—</div>
+        </div>
+    `;
+    loadCompanyLogo(card, stockConfig);
+    updateDividendsTable(card, stockConfig.dividends);
+    return card;
+}
+
+/* Cria o HTML do item de lista para um ativo */
+function createStockListItem(stockConfig) {
+    const nextDividendDate = findNextDividendDate(stockConfig.dividends);
+    const listItem = document.createElement('div');
+    listItem.className = 'list-item';
+    listItem.id = `list-${stockConfig.ticker.replace('.', '-')}`;
+    listItem.dataset.ticker = stockConfig.ticker;
+    listItem.onclick = () => openModal(stockConfig.ticker);
+    listItem.innerHTML = `
+        <div class="company-logo tooltip">
+            <div class="logo-fallback">${stockConfig.displayTicker.charAt(0)}</div>
+            <span class="tooltiptext">Ver detalhes</span>
+        </div>
+        <div class="list-ticker-info">
+            <div class="list-ticker-symbol">${stockConfig.displayTicker}</div>
+            <div class="list-company-name">—</div>
+        </div>
+        <div class="list-price-info">
+            <div class="list-current-price">R$ --,--</div>
+            <div class="list-price-change change-neutral"><span class="list-change-arrow">—</span> <span class="list-change-pct">--%</span></div>
+        </div>
+        <div class="list-metrics">
+            <div class="list-metric">
+                <div class="list-metric-label">Volume</div>
+                <div class="list-metric-value volume">—</div>
+            </div>
+            <div class="list-metric">
+                <div class="list-metric-label">RSI</div>
+                <div class="list-metric-value rsi">—</div>
+            </div>
+            <div class="list-metric">
+                <div class="list-metric-label">CCI</div>
+                <div class="list-metric-value cci">—</div>
+            </div>
+            <div class="list-metric">
+                <div class="list-metric-label">SMA Lows</div>
+                <div class="list-metric-value sma">—</div>
+            </div>
+        </div>
+        <div class="list-dividend-info">
+            <div class="list-dividend-label">Próxima Data COM</div>
+            <div class="list-dividend-value">${nextDividendDate || '—'}</div>
+        </div>
+    `;
+    loadCompanyLogo(listItem, stockConfig);
+    return listItem;
+}
+
+/* Carrega o logo da empresa */
+async function loadCompanyLogo(element, stockConfig) {
+    const logoElement = element.querySelector('.company-logo');
+    if (!logoElement || !stockConfig.logo) return;
+    try {
+        const img = document.createElement('img');
+        img.src = stockConfig.logo;
+        img.alt = `${stockConfig.displayTicker} logo`;
+        img.onload = () => {
+            logoElement.innerHTML = '';
+            logoElement.appendChild(img);
+            const tooltip = document.createElement('span');
+            tooltip.className = 'tooltiptext';
+            tooltip.textContent = element.classList.contains('list-item') ? 'Ver detalhes' : 'Atualizar';
+            logoElement.appendChild(tooltip);
+        };
+        img.onerror = () => console.warn(`Logo não carregado para ${stockConfig.displayTicker}`);
+    } catch (e) {
+        console.warn(`Erro ao carregar logo para ${stockConfig.displayTicker}:`, e);
+    }
+}
+
+/* Modal functions */
+async function openModal(ticker) {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContent');
+    const stockConfig = STOCKS_CONFIG.find(s => s.ticker === ticker);
+    if (!stockConfig) return;
+    modalContent.innerHTML = '<button class="close-modal" onclick="closeModal()">&times;</button>';
+    const card = createStockCard(stockConfig);
+    modalContent.appendChild(card);
+    await loadStockData(ticker);
+    modal.classList.add('active');
+    document.addEventListener('click', outsideClickListener);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    const modal = document.getElementById('modal');
+    modal.classList.remove('active');
+    document.removeEventListener('click', outsideClickListener);
+    document.body.style.overflow = 'auto';
+}
+
+function outsideClickListener(event) {
+    const modalContent = document.getElementById('modalContent');
+    if (!modalContent.contains(event.target) && !event.target.closest('.list-item')) {
+        closeModal();
+    }
+}
+
+/* Carregamento de dados para um ativo específico */
+async function loadStockData(ticker) {
+    const cardId = `card-${ticker.replace('.', '-')}`;
+    const listId = `list-${ticker.replace('.', '-')}`;
+    const cardElement = document.getElementById(cardId) || document.querySelector(`#modalContent .card`);
+    const listElement = document.getElementById(listId);
+    if (!cardElement && !listElement) return;
+    const logoElement = cardElement ? cardElement.querySelector('.company-logo') : listElement.querySelector('.company-logo');
+    if (!logoElement) return;
+    const stockConfig = STOCKS_CONFIG.find(s => s.ticker === ticker);
+    if (!stockConfig) return;
+    showError(null, false, cardElement || listElement);
+    logoElement.classList.add('loading');
+    try {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const startSec = nowSec - (20 * 24 * 60 * 60);
+        const chartUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${startSec}&period2=${nowSec}&interval=1d&includePrePost=false`;
+        const chartData = await proxyFetchJson(chartUrl);
+        if (!chartData || !chartData.chart || !chartData.chart.result || chartData.chart.result.length === 0) {
+            throw new Error('Dados de chart vazios');
+        }
+        const result = chartData.chart.result[0];
+        const meta = result.meta || {};
+        const indicator = (result.indicators && result.indicators.quote && result.indicators.quote[0]) || {};
+        const closes = Array.isArray(indicator.close) ? indicator.close : [];
+        const highs = Array.isArray(indicator.high) ? indicator.high : [];
+        const lows = Array.isArray(indicator.low) ? indicator.low : [];
+        const volumes = Array.isArray(indicator.volume) ? indicator.volume : [];
+        const last = findLastValid(closes);
+        let currentPrice = last ? last.value : (meta.regularMarketPrice || null);
+        let prevClose = null;
+        if (closes.length >= 2) {
+            for (let i = closes.length - 2; i >= 0; i--) {
+                if (closes[i] !== null && !isNaN(closes[i])) {
+                    prevClose = closes[i];
+                    break;
+                }
+            }
+        }
+        if (prevClose === null && meta.chartPreviousClose) {
+            prevClose = meta.chartPreviousClose;
+        }
+        const validVolumes = volumes.filter(v => v !== null && !isNaN(v));
+        let avgVol = null;
+        if (validVolumes.length > 0) {
+            const lastN = Math.min(5, validVolumes.length);
+            const slice = validVolumes.slice(-lastN);
+            avgVol = slice.reduce((a, b) => a + b, 0) / lastN;
+        }
+        const rsiVal = computeRSIFromCloses(closes);
+        const cciVal = computeCCI(highs, lows, closes);
+        const smaLowVal = computeSMALows(lows);
+        let changePct = null;
+        if (currentPrice !== null && prevClose !== null && !isNaN(currentPrice) && !isNaN(prevClose) && prevClose !== 0) {
+            changePct = ((Number(currentPrice) - Number(prevClose)) / Number(prevClose)) * 100;
+        }
+        let companyName = '—';
+        try {
+            const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${ticker}&quotesCount=1&newsCount=0`;
+            const searchData = await proxyFetchJson(searchUrl);
+            const extracted = extractCompanyNameFromSearch(searchData);
+            if (extracted) companyName = extracted;
+        } catch (qe) {
+            console.warn('Falha ao obter nome da empresa (não crítico):', qe);
+        }
+        
+        // Armazenar dados para filtros
+        stockData[ticker] = {
+            currentPrice,
+            rsi: rsiVal,
+            cci: cciVal,
+            smaLow: smaLowVal,
+            nextDividendDate: findNextDividendDate(stockConfig.dividends),
+            companyName
+        };
+        
+        if (cardElement) {
+            const tickerSymbolEl = cardElement.querySelector('.ticker-symbol');
+            const companyNameEl = cardElement.querySelector('.company-name');
+            const currentPriceEl = cardElement.querySelector('.current-price');
+            const volumeEl = cardElement.querySelector('.volume');
+            const rsiEl = cardElement.querySelector('.rsi');
+            const cciEl = cardElement.querySelector('.cci');
+            const smaEl = cardElement.querySelector('.sma');
+            const lastUpdateEl = cardElement.querySelector('.last-update');
+            if (tickerSymbolEl) tickerSymbolEl.textContent = stockConfig.displayTicker;
+            if (companyNameEl) companyNameEl.textContent = companyName;
+            if (currentPriceEl) currentPriceEl.textContent = formatBRL(currentPrice);
+            if (volumeEl) volumeEl.textContent = avgVol ? formatVolume(avgVol) : '—';
+            if (rsiEl) {
+                rsiEl.textContent = (rsiVal !== null ? rsiVal.toFixed(2) : '—');
+                rsiEl.style.color = (rsiVal !== null && rsiVal <= 20) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            if (cciEl) {
+                cciEl.textContent = (cciVal !== null ? cciVal.toFixed(2) : '—');
+                cciEl.style.color = (cciVal !== null && cciVal < -200) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            if (smaEl) {
+                smaEl.textContent = (smaLowVal !== null ? formatBRL(smaLowVal) : '—');
+                smaEl.style.color = (smaLowVal !== null && currentPrice !== null && smaLowVal > currentPrice) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            updatePriceChangeDisplay(cardElement, changePct, false);
+            const now = new Date();
+            if (lastUpdateEl) lastUpdateEl.textContent = 'Atualizado: ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (listElement) {
+            const companyNameEl = listElement.querySelector('.list-company-name');
+            const currentPriceEl = listElement.querySelector('.list-current-price');
+            const volumeEl = listElement.querySelector('.list-metric .volume');
+            const rsiEl = listElement.querySelector('.list-metric .rsi');
+            const cciEl = listElement.querySelector('.list-metric .cci');
+            const smaEl = listElement.querySelector('.list-metric .sma');
+            if (companyNameEl) companyNameEl.textContent = companyName;
+            if (currentPriceEl) currentPriceEl.textContent = formatBRL(currentPrice);
+            if (volumeEl) volumeEl.textContent = avgVol ? formatVolume(avgVol) : '—';
+            if (rsiEl) {
+                rsiEl.textContent = (rsiVal !== null ? rsiVal.toFixed(2) : '—');
+                rsiEl.style.color = (rsiVal !== null && rsiVal <= 20) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            if (cciEl) {
+                cciEl.textContent = (cciVal !== null ? cciVal.toFixed(2) : '—');
+                cciEl.style.color = (cciVal !== null && cciVal < -200) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            if (smaEl) {
+                smaEl.textContent = (smaLowVal !== null ? formatBRL(smaLowVal) : '—');
+                smaEl.style.color = (smaLowVal !== null && currentPrice !== null && smaLowVal > currentPrice) ? 'var(--positive)' : 'var(--text-primary)';
+            }
+            updatePriceChangeDisplay(listElement, changePct, true);
+        }
+    } catch (err) {
+        showError('Erro ao carregar dados: ' + (err.message || err), false, cardElement || listElement);
+        if (cardElement) {
+            const currentPriceEl = cardElement.querySelector('.current-price');
+            const volumeEl = cardElement.querySelector('.volume');
+            const rsiEl = cardElement.querySelector('.rsi');
+            const cciEl = cardElement.querySelector('.cci');
+            const smaEl = cardElement.querySelector('.sma');
+            const lastUpdateEl = cardElement.querySelector('.last-update');
+            if (currentPriceEl) currentPriceEl.textContent = 'R$ --,--';
+            if (volumeEl) volumeEl.textContent = '—';
+            if (rsiEl) {
+                rsiEl.textContent = '—';
+                rsiEl.style.color = 'var(--text-primary)';
+            }
+            if (cciEl) {
+                cciEl.textContent = '—';
+                cciEl.style.color = 'var(--text-primary)';
+            }
+            if (smaEl) {
+                smaEl.textContent = '—';
+                smaEl.style.color = 'var(--text-primary)';
+            }
+            updatePriceChangeDisplay(cardElement, null, false);
+            if (lastUpdateEl) lastUpdateEl.textContent = 'Erro ao carregar';
+        }
+        if (listElement) {
+            const currentPriceEl = listElement.querySelector('.list-current-price');
+            const volumeEl = listElement.querySelector('.list-metric .volume');
+            const rsiEl = listElement.querySelector('.list-metric .rsi');
+            const cciEl = listElement.querySelector('.list-metric .cci');
+            const smaEl = listElement.querySelector('.list-metric .sma');
+            if (currentPriceEl) currentPriceEl.textContent = 'R$ --,--';
+            if (volumeEl) volumeEl.textContent = '—';
+            if (rsiEl) {
+                rsiEl.textContent = '—';
+                rsiEl.style.color = 'var(--text-primary)';
+            }
+            if (cciEl) {
+                cciEl.textContent = '—';
+                cciEl.style.color = 'var(--text-primary)';
+            }
+            if (smaEl) {
+                smaEl.textContent = '—';
+                smaEl.style.color = 'var(--text-primary)';
+            }
+            updatePriceChangeDisplay(listElement, null, true);
+        }
+    } finally {
+        logoElement.classList.remove('loading');
+    }
+}
+
+/* Carrega dados para todos os ativos */
+async function loadAllStockData() {
+    showError(null, true);
+    const btn = document.getElementById('refreshAllBtn');
+    const refreshText = document.getElementById('refreshText');
+    const refreshSpinner = document.getElementById('refreshSpinner');
+    
+    if (!btn) return;
+    btn.disabled = true;
+    refreshText.textContent = 'Carregando...';
+    refreshSpinner.style.display = 'inline-block';
+    
+    try {
+        await Promise.all(STOCKS_CONFIG.map(stock => loadStockData(stock.ticker)));
+    } catch (err) {
+        showError('Erro ao carregar alguns dados: ' + (err.message || err), true);
+    } finally {
+        btn.disabled = false;
+        refreshText.textContent = 'Atualizar Tudo';
+        refreshSpinner.style.display = 'none';
+    }
+}
+
+/* Filtros e busca */
+function filterStocks() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const rsiFilter = document.getElementById('rsiFilter').value;
+    const cciFilter = document.getElementById('cciFilter').value;
+    const smaFilter = document.getElementById('smaFilter').value;
+    const dividendFilter = document.getElementById('dividendFilter').value;
+    
+    const listItems = document.querySelectorAll('.list-item');
+    let hasVisibleItems = false;
+    
+    listItems.forEach(item => {
+        const ticker = item.dataset.ticker;
+        const data = stockData[ticker] || {};
+        const companyName = item.querySelector('.list-company-name').textContent.toLowerCase();
+        const tickerSymbol = item.querySelector('.list-ticker-symbol').textContent.toLowerCase();
+        
+        // Verificar busca por texto
+        const matchesSearch = searchText === '' || 
+            tickerSymbol.includes(searchText) || 
+            companyName.includes(searchText);
+        
+        // Verificar filtro RSI
+        let matchesRsi = true;
+        if (rsiFilter && data.rsi !== null && data.rsi !== undefined) {
+            if (rsiFilter === 'oversold') matchesRsi = data.rsi <= 20;
+            else if (rsiFilter === 'neutral') matchesRsi = data.rsi > 20 && data.rsi < 80;
+            else if (rsiFilter === 'overbought') matchesRsi = data.rsi >= 80;
+        }
+        
+        // Verificar filtro CCI
+        let matchesCci = true;
+        if (cciFilter && data.cci !== null && data.cci !== undefined) {
+            if (cciFilter === 'oversold') matchesCci = data.cci <= -200;
+            else if (cciFilter === 'neutral') matchesCci = data.cci > -200 && data.cci < 200;
+            else if (cciFilter === 'overbought') matchesCci = data.cci >= 200;
+        }
+        
+        // Verificar filtro SMA
+        let matchesSma = true;
+        if (smaFilter && data.smaLow !== null && data.smaLow !== undefined && data.currentPrice !== null) {
+            if (smaFilter === 'above') matchesSma = data.smaLow > data.currentPrice;
+            else if (smaFilter === 'below') matchesSma = data.smaLow <= data.currentPrice;
+        }
+        
+        // Verificar filtro de dividendos
+        let matchesDividend = true;
+        if (dividendFilter && data.nextDividendDate) {
+            const dividendDate = parseDateString(data.nextDividendDate);
+            if (dividendDate) {
+                const today = new Date();
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+                const nextMonth = new Date(today);
+                nextMonth.setMonth(today.getMonth() + 1);
+                
+                if (dividendFilter === 'thisWeek') {
+                    matchesDividend = dividendDate >= today && dividendDate <= nextWeek;
+                } else if (dividendFilter === 'thisMonth') {
+                    matchesDividend = dividendDate >= today && dividendDate <= nextMonth;
+                } else if (dividendFilter === 'nextMonth') {
+                    const nextNextMonth = new Date(today);
+                    nextNextMonth.setMonth(today.getMonth() + 2);
+                    matchesDividend = dividendDate > nextMonth && dividendDate <= nextNextMonth;
+                }
+            }
+        }
+        
+        // Aplicar todos os filtros
+        if (matchesSearch && matchesRsi && matchesCci && matchesSma && matchesDividend) {
+            item.style.display = 'grid';
+            hasVisibleItems = true;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Mostrar mensagem se não houver resultados
+    const noResults = document.getElementById('noResults');
+    if (!hasVisibleItems) {
+        if (!noResults) {
+            const noResultsEl = document.createElement('div');
+            noResultsEl.id = 'noResults';
+            noResultsEl.className = 'no-results';
+            noResultsEl.textContent = 'Nenhum resultado encontrado com os filtros aplicados.';
+            document.getElementById('listContainer').appendChild(noResultsEl);
+        }
+    } else if (noResults) {
+        noResults.remove();
+    }
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('rsiFilter').value = '';
+    document.getElementById('cciFilter').value = '';
+    document.getElementById('smaFilter').value = '';
+    document.getElementById('dividendFilter').value = '';
+    filterStocks();
+}
+
+/* Tema */
+function toggleTheme() {
+    const body = document.body;
+    const current = body.getAttribute('data-theme') || 'light';
+    const next = current === 'light' ? 'dark' : 'light';
+    body.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+}
+(function initTheme() {
+    const s = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', s);
+})();
+
+/* Inicializa a página */
+function initializePage() {
+    const listContainer = document.getElementById('listContainer');
+    if (!listContainer) return;
+    STOCKS_CONFIG.forEach(stockConfig => {
+        const listItem = createStockListItem(stockConfig);
+        listContainer.appendChild(listItem);
+    });
+    loadAllStockData();
+    setInterval(loadAllStockData, 2 * 60 * 1000);
+}
+
+document.addEventListener('DOMContentLoaded', initializePage);
+</script>
+</body>
+</html>
